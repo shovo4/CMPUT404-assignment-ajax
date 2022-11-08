@@ -40,6 +40,7 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
                 if (xhr.status==200) {
                     //XXX: parse some JSON from the request!
                     //XXX: Pass the data to the callback!
+                    callback(JSON.parse(xhr.responseText));
                 }
             } 
             catch(e) {
@@ -48,9 +49,13 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
         }
     };
     //XXX: POST to a URL
+    xhr.open('POST', url, true);
     //XXX: set the mimetype and the accept headers!
+    xhr.setRequestHeader('content-type', 'application/json');
     // Remember to use application/json !
-}
+    xhr.setRequestHeader('Accept', 'application/json');
+    xhr.send(JSON.stringify(objects))
+}   
 
 
 world = {};
@@ -66,7 +71,7 @@ function drawCircle(context,entity) {
         fillStyle = entity["colour"];
         strokeStyle = fillStyle;
         arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
-        stroke();                                
+        fill();                               
     }
 }
 
@@ -136,8 +141,10 @@ function getPosition(e) {
 
 function addEntity(entity, data) {
     world[entity] = data;
-    drawNextFrame(); // (but should we?)
+    //drawNextFrame(); // (but should we?)
     //XXX: Send a XHTML Request that updates the entity you just  modified!
+    url = '/entity/' + entity;
+    sendJSONXMLHTTPRequest(url, data, data=>{drawNextFrame();});
 
 }
 
@@ -247,22 +254,29 @@ mouse = (function() {
 // Add the application specific mouse listeners!
 //XXX: TODO Make these prettier!
 mouse.mousedowners.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'blue'});
+    Listofcolor = ['#CD5C5C', '#FFFF00', '#E6E6FA', '#6A5ACD', '#98FB98', '#00FFFF']
+    addEntityWithoutName({'x':x,'y':y,'colour':Listofcolor[Math.floor(Math.random()*Listofcolor.length)]});
 });
 
 mouse.mouseuppers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'red'});
+    Listofcolor = ['#CD5C5C', '#FFFF00', '#E6E6FA', '#6A5ACD', '#98FB98', '#00FFFF']
+    addEntityWithoutName({'x':x,'y':y,'colour':Listofcolor[Math.floor(Math.random()*Listofcolor.length)]});
 });
 
 mouse.mousedraggers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'green',
+    Listofcolor = ['#CD5C5C', '#FFFF00', '#E6E6FA', '#6A5ACD', '#98FB98', '#00FFFF']
+    addEntityWithoutName({'x':x,'y':y,'colour':Listofcolor[Math.floor(Math.random()*Listofcolor.length)],
                           'radius':10});
 });
 
-
 function update() {
-    //XXX: TODO Get the world from the webservice using a XMLHTTPRequest
     drawFrame();
+    //XXX: TODO Get the world from the webservice using a XMLHTTPRequest
+    sendJSONXMLHTTPRequest('/world', {}, (data)=>{
+        world = data;
+        drawNextFrame();
+    })
+    
 }
 
 // 30 frames per second
